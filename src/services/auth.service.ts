@@ -8,6 +8,12 @@ export const authService = {
       body: JSON.stringify({ email, password }),
     }),
 
+  register: (email: string, password: string) =>
+    request<{ message: string; user: { id: number; email: string } }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+
   saveToken,
   clearToken,
 }
