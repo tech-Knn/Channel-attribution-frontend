@@ -11,8 +11,8 @@ export interface RevenueSummary {
 }
 
 export interface RevenueByArticle {
+  db_id: string
   article_id: string
-  external_id: string
   url: string | null
   category: string | null
   published_at: string
@@ -24,8 +24,8 @@ export interface RevenueByArticle {
 }
 
 export interface RevenueByChannel {
+  db_id: string
   channel_id: string
-  external_id: string
   channel_status: string
   articles_served: string
   total_impressions: string
@@ -36,7 +36,6 @@ export interface RevenueByChannel {
 export interface UnattributedRevenue {
   id: string
   channel_id: string
-  channel_external_id: string
   revenue: string
   impressions: number
   period_start: string

@@ -29,7 +29,7 @@ export default function ChannelsPage() {
 
   const channelCols = [
     { key: 'id', label: 'ID', render: (c: Channel) => <span className="font-mono text-xs text-zinc-500">{c.id}</span> },
-    { key: 'external_id', label: 'External ID', render: (c: Channel) => <span className="font-mono text-xs text-zinc-300">{c.external_id}</span> },
+    { key: 'channel_id', label: 'Channel ID', render: (c: Channel) => <span className="font-mono text-xs text-zinc-300">{c.channel_id}</span> },
     { key: 'status', label: 'Status', render: (c: Channel) => <Badge status={c.status} /> },
     { key: 'idle_since', label: 'Idle Since', render: (c: Channel) => c.idle_since ? <span className="text-xs text-zinc-400">{timeAgo(c.idle_since)}</span> : <span className="text-zinc-600">—</span> },
     { key: 'assigned_to', label: 'Assigned To', render: (c: Channel) => c.assigned_to ? <span className="font-mono text-xs text-zinc-400">{c.assigned_to}</span> : <span className="text-zinc-600">—</span> },

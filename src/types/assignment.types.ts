@@ -6,7 +6,5 @@ export interface Assignment {
   unassigned_at: string | null
   status: 'active' | 'completed' | 'expired'
   created_at: string
-  article_external_id: string
   article_url: string | null
-  channel_external_id: string
 }

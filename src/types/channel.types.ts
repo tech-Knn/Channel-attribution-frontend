@@ -1,6 +1,6 @@
 export interface Channel {
   id: string
-  external_id: string
+  channel_id: string
   status: 'idle' | 'assigned' | 'disapproved' | 'manual_review'
   idle_since: string | null
   assigned_to: string | null
@@ -16,8 +16,8 @@ export interface IdleQueueEntry {
 }
 
 export interface IdleLoss {
+  db_id: string
   channel_id: string
-  external_id: string
   idle_since: string
   idle_hours: string
   estimated_lost_revenue: string

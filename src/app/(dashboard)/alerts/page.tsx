@@ -28,7 +28,7 @@ function alertMeta(a: Alert): { color: string; title: string; desc: string } {
 }
 
 const idleLossCols = [
-  { key: 'channel', label: 'Channel', render: (r: IdleLoss) => <span className="font-mono text-xs text-zinc-300">{r.external_id}</span> },
+  { key: 'channel', label: 'Channel', render: (r: IdleLoss) => <span className="font-mono text-xs text-zinc-300">{r.channel_id}</span> },
   { key: 'idle_hours', label: 'Idle Duration', render: (r: IdleLoss) => <span className="tabular-nums text-amber-400/80">{Number(r.idle_hours).toFixed(1)}h</span> },
   { key: 'revenue', label: 'Est. Lost Revenue', render: (r: IdleLoss) => <span className="tabular-nums font-semibold text-red-400">{currency(r.estimated_lost_revenue)}</span> },
 ]

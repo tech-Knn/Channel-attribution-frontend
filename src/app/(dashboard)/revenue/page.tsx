@@ -49,7 +49,7 @@ export default function RevenuePage() {
   }
 
   const artCols = [
-    { key: 'external_id', label: 'Article', render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.external_id}</span> },
+    { key: 'article_id', label: 'Article', render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.article_id}</span> },
     { key: 'url', label: 'URL', render: (r: RevenueByArticle) => r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="max-w-[220px] truncate block text-blue-400 hover:underline text-xs">{r.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 45)}</a> : <span className="text-zinc-600">—</span> },
     { key: 'article_status', label: 'Status', render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
     { key: 'total_impressions', label: 'Impressions', sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
@@ -59,7 +59,7 @@ export default function RevenuePage() {
   ]
 
   const chCols = [
-    { key: 'external_id', label: 'Channel', render: (r: RevenueByChannel) => <span className="font-mono text-xs text-zinc-400">{r.external_id}</span> },
+    { key: 'channel_id', label: 'Channel', render: (r: RevenueByChannel) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
     { key: 'channel_status', label: 'Status', render: (r: RevenueByChannel) => <Badge status={r.channel_status} /> },
     { key: 'articles_served', label: 'Articles Served', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.articles_served)}</span> },
     { key: 'total_impressions', label: 'Impressions', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
@@ -68,7 +68,7 @@ export default function RevenuePage() {
   ]
 
   const uCols = [
-    { key: 'channel', label: 'Channel', render: (r: UnattributedRevenue) => <span className="font-mono text-xs text-zinc-400">{r.channel_external_id}</span> },
+    { key: 'channel', label: 'Channel', render: (r: UnattributedRevenue) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
     { key: 'revenue', label: 'Revenue', render: (r: UnattributedRevenue) => <span className="tabular-nums font-semibold text-red-400">{currency(r.revenue)}</span> },
     { key: 'impressions', label: 'Impressions', render: (r: UnattributedRevenue) => <span className="tabular-nums">{number(r.impressions)}</span> },
     { key: 'period_start', label: 'Period Start', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.period_start)}</span> },

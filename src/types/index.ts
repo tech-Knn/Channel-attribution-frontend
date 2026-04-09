@@ -7,7 +7,7 @@ export type { DashboardStats, Alert } from './stats.types'
 // Legacy — kept for backwards compat with any existing Article references
 export interface Article {
   id: string
-  external_id: string
+  article_id: string
   url: string | null
   category: string | null
   status: 'pending' | 'assigned' | 'active' | 'expired' | 'stopped'

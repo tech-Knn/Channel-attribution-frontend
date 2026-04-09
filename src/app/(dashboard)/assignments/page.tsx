@@ -35,8 +35,8 @@ export default function AssignmentsPage() {
   const { data: history, isLoading: histLoading } = useAssignmentHistory({ limit: LIMIT, offset: (histPage - 1) * LIMIT, status: histStatus })
 
   const activeCols = [
-    { key: 'channel', label: 'Channel', render: (a: Assignment) => <span className="font-mono text-xs text-zinc-300">{a.channel_external_id}</span> },
-    { key: 'article', label: 'Article', render: (a: Assignment) => <span className="font-mono text-xs text-zinc-400">{a.article_external_id}</span> },
+    { key: 'channel', label: 'Channel', render: (a: Assignment) => <span className="font-mono text-xs text-zinc-300">{a.channel_id}</span> },
+    { key: 'article', label: 'Article', render: (a: Assignment) => <span className="font-mono text-xs text-zinc-400">{a.article_id}</span> },
     { key: 'url', label: 'URL', render: (a: Assignment) => a.article_url ? <a href={a.article_url} target="_blank" rel="noreferrer" className="block max-w-[200px] truncate text-xs text-blue-400 hover:underline">{a.article_url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40)}</a> : <span className="text-zinc-600">—</span> },
     { key: 'assigned_at', label: 'Assigned', render: (a: Assignment) => <span className="text-xs text-zinc-400">{shortDate(a.assigned_at)}</span> },
     { key: 'duration', label: 'Duration', render: (a: Assignment) => <span className="tabular-nums text-xs">{duration(a.assigned_at)}</span> },
@@ -44,8 +44,8 @@ export default function AssignmentsPage() {
   ]
 
   const histCols = [
-    { key: 'channel', label: 'Channel', render: (a: Assignment) => <span className="font-mono text-xs text-zinc-300">{a.channel_external_id}</span> },
-    { key: 'article', label: 'Article', render: (a: Assignment) => <span className="font-mono text-xs text-zinc-400">{a.article_external_id}</span> },
+    { key: 'channel', label: 'Channel', render: (a: Assignment) => <span className="font-mono text-xs text-zinc-300">{a.channel_id}</span> },
+    { key: 'article', label: 'Article', render: (a: Assignment) => <span className="font-mono text-xs text-zinc-400">{a.article_id}</span> },
     { key: 'assigned_at', label: 'Assigned At', render: (a: Assignment) => <span className="text-xs text-zinc-400">{shortDate(a.assigned_at)}</span> },
     { key: 'unassigned_at', label: 'Closed At', render: (a: Assignment) => a.unassigned_at ? <span className="text-xs text-zinc-400">{shortDate(a.unassigned_at)}</span> : <span className="text-zinc-600">—</span> },
     { key: 'duration', label: 'Duration', render: (a: Assignment) => <span className="tabular-nums text-xs">{duration(a.assigned_at, a.unassigned_at)}</span> },

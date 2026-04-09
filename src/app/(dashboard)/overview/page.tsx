@@ -60,7 +60,7 @@ export default function OverviewPage() {
   ]
 
   const revenueColumns = [
-    { key: 'id', label: 'Article', render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.external_id}</span> },
+    { key: 'article_id', label: 'Article', render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.article_id}</span> },
     { key: 'status', label: 'Status', render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
     { key: 'impressions', label: 'Impressions', render: (r: RevenueByArticle) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
     { key: 'revenue', label: 'Revenue', render: (r: RevenueByArticle) => <span className="font-semibold tabular-nums text-emerald-400">{currency(r.total_revenue)}</span> },
