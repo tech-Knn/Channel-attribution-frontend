@@ -3,6 +3,7 @@ export type { Channel, IdleQueueEntry, IdleLoss } from './channel.types'
 export type { Assignment } from './assignment.types'
 export type { RevenueSummary, RevenueByArticle, RevenueByChannel, UnattributedRevenue } from './revenue.types'
 export type { DashboardStats, Alert } from './stats.types'
+export * from './articles.types' //changes
 
 // Legacy — kept for backwards compat with any existing Article references
 export interface Article {
