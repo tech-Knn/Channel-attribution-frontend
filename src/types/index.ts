@@ -16,4 +16,6 @@ export interface Article {
   expired_at: string | null
   expiry_reason: string | null
   created_at: string
+  reactivated_at: string
+  direct_pageviews: string
 }

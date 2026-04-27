@@ -45,22 +45,22 @@ export default function ArticlesPage() {
     },
     {
       key: 'AticleId',
-      label: 'Article Id',
+      label: 'Article Name',
       render: (a: Article) => (
         <span className="text-sm text-zinc-200">{a.article_id}</span>
+      ),
+    },
+    {
+      key: 'direct_pageviews',
+      label: 'Direct Page Views',
+      render: (a: Article) => (
+        <span className="text-sm text-zinc-200">{a.direct_pageviews}</span>
       ),
     },
     {
       key: 'status',
       label: 'Status',
       render: (a: Article) => <Badge status={a.status} />,
-    },
-    {
-      key: 'assigned_to',
-      label: 'Assigned To',
-      render: () =>
-          <span className="font-mono text-xs text-zinc-400">
-          </span>
     },
     {
       key: 'created_at',
@@ -72,10 +72,11 @@ export default function ArticlesPage() {
       ),
     },
     {
-      key: 'updated_at',
-      label: 'Updated',
+      key: 'reactivated_at',
+      label: 'Reactivated',
       render: (a: Article) => (
         <span className="text-xs text-zinc-500">
+          {timeAgo(a.reactivated_at)}
         </span>
       ),
     },

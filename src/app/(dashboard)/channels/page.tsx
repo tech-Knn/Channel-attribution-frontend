@@ -32,7 +32,6 @@ export default function ChannelsPage() {
     { key: 'channel_id', label: 'Channel ID', render: (c: Channel) => <span className="font-mono text-xs text-zinc-300">{c.channel_id}</span> },
     { key: 'status', label: 'Status', render: (c: Channel) => <Badge status={c.status} /> },
     { key: 'idle_since', label: 'Idle Since', render: (c: Channel) => c.idle_since ? <span className="text-xs text-zinc-400">{timeAgo(c.idle_since)}</span> : <span className="text-zinc-600">—</span> },
-    { key: 'assigned_to', label: 'Assigned To', render: (c: Channel) => c.assigned_to ? <span className="font-mono text-xs text-zinc-400">{c.assigned_to}</span> : <span className="text-zinc-600">—</span> },
     { key: 'updated_at', label: 'Last Updated', render: (c: Channel) => <span className="text-xs text-zinc-500">{timeAgo(c.updated_at)}</span> },
   ]
 
