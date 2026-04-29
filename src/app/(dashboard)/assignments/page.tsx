@@ -15,7 +15,7 @@ const MAX_AGE_MS = 72 * 3600 * 1000 // 3-day expiry window
 
 function ProgressBar({ lastTrafficAt, assignedAt }: { lastTrafficAt: string | null; assignedAt: string }) {
   const baseline = lastTrafficAt ?? assignedAt
-  const elapsed = Date.now() - new Date(baseline).getTime()
+  const elapsed = Math.max(0, Date.now() - new Date(baseline).getTime())
   const pct = Math.min(100, Math.round((elapsed / MAX_AGE_MS) * 100))
   const color = pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-amber-500' : 'bg-blue-500'
   return (
