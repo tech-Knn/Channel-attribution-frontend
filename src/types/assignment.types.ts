@@ -7,4 +7,5 @@ export interface Assignment {
   status: 'active' | 'completed' | 'expired'
   created_at: string
   article_url: string | null
+  last_traffic_at: string | null
 }

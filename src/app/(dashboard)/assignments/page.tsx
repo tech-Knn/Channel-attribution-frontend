@@ -13,8 +13,9 @@ import type { Assignment } from '@/types'
 const LIMIT = 20
 const MAX_AGE_MS = 72 * 3600 * 1000 // 3-day expiry window
 
-function ProgressBar({ assignedAt }: { assignedAt: string }) {
-  const elapsed = Date.now() - new Date(assignedAt).getTime()
+function ProgressBar({ lastTrafficAt, assignedAt }: { lastTrafficAt: string | null; assignedAt: string }) {
+  const baseline = lastTrafficAt ?? assignedAt
+  const elapsed = Date.now() - new Date(baseline).getTime()
   const pct = Math.min(100, Math.round((elapsed / MAX_AGE_MS) * 100))
   const color = pct > 80 ? 'bg-red-500' : pct > 50 ? 'bg-amber-500' : 'bg-blue-500'
   return (
@@ -40,7 +41,7 @@ export default function AssignmentsPage() {
     { key: 'url', label: 'URL', render: (a: Assignment) => a.article_url ? <a href={a.article_url} target="_blank" rel="noreferrer" className="block max-w-[200px] truncate text-xs text-blue-400 hover:underline">{a.article_url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40)}</a> : <span className="text-zinc-600">—</span> },
     { key: 'assigned_at', label: 'Assigned', render: (a: Assignment) => <span className="text-xs text-zinc-400">{shortDate(a.assigned_at)}</span> },
     { key: 'duration', label: 'Duration', render: (a: Assignment) => <span className="tabular-nums text-xs">{duration(a.assigned_at)}</span> },
-    { key: 'progress', label: 'Expiry Progress', render: (a: Assignment) => <ProgressBar assignedAt={a.assigned_at} /> },
+    { key: 'progress', label: 'Expiry Progress', render: (a: Assignment) => <ProgressBar lastTrafficAt={a.last_traffic_at} assignedAt={a.assigned_at} /> },
   ]
 
   const histCols = [
