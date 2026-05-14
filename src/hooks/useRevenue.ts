@@ -1,8 +1,15 @@
 import useSWR from 'swr'
-import { revenueService, type SortParams } from '@/services/revenue.service'
+import { revenueService, type SortParams, type PaginationParams } from '@/services/revenue.service'
 
-export function useRevenueSummary(refreshInterval = 60_000) {
-  return useSWR('revenue-summary', revenueService.fetchSummary, { refreshInterval })
+export function useRevenueSummary(
+  range?: { from: string; to: string },
+  refreshInterval = 60_000,
+) {
+  return useSWR(
+    range ? ['revenue-summary', range] : 'revenue-summary',
+    () => revenueService.fetchSummary(range),
+    { refreshInterval },
+  )
 }
 
 export function useRevenueByArticle(params: SortParams, enabled = true) {
@@ -21,7 +28,7 @@ export function useRevenueByChannel(params: SortParams, enabled = true) {
   )
 }
 
-export function useUnattributedRevenue(params: { limit: number; offset: number }, enabled = true) {
+export function useUnattributedRevenue(params: PaginationParams, enabled = true) {
   return useSWR(
     enabled ? ['rev-unattr', params] : null,
     () => revenueService.fetchUnattributed(params),

@@ -1,13 +1,21 @@
 export interface RevenueSummary {
-  revenue_today: string
-  impressions_today: number
-  clicks_today: number
-  revenue_7d: string
-  impressions_7d: number
-  clicks_7d: number
-  revenue_30d: string
-  impressions_30d: number
-  clicks_30d: number
+  // Legacy (no date filter)
+  revenue_today?: string
+  impressions_today?: number
+  clicks_today?: number
+  revenue_7d?: string
+  impressions_7d?: number
+  clicks_7d?: number
+  revenue_30d?: string
+  impressions_30d?: number
+  clicks_30d?: number
+
+  // Date-filtered response
+  revenue_range?: string
+  impressions_range?: number
+  clicks_range?: number
+  last_pulled_at?: string | null
+  range?: { from: string; to: string }
 }
 
 export interface RevenueByArticle {
@@ -21,6 +29,8 @@ export interface RevenueByArticle {
   total_clicks: string
   total_revenue: string
   rpm: string
+  last_pulled_at: string | null
+  last_period_end: string | null
 }
 
 export interface RevenueByChannel {
@@ -31,6 +41,8 @@ export interface RevenueByChannel {
   total_impressions: string
   total_clicks: string
   total_revenue: string
+  last_pulled_at: string | null
+  last_period_end: string | null
 }
 
 export interface UnattributedRevenue {

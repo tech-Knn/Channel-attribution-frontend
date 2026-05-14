@@ -6,26 +6,41 @@ export interface SortParams {
   offset: number
   sortBy: string
   sortDir: 'ASC' | 'DESC'
+  from?: string
+  to?: string
+}
+
+export interface PaginationParams {
+  limit: number
+  offset: number
+  from?: string
+  to?: string
+}
+
+function buildQuery(params: Record<string, unknown>): string {
+  const clean: Record<string, string> = {}
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null && v !== '') clean[k] = String(v)
+  }
+  return new URLSearchParams(clean).toString()
 }
 
 export const revenueService = {
-  fetchSummary: async (): Promise<RevenueSummary> => {
-    const res = await request<{ data: RevenueSummary }>('/revenue/summary')
+  fetchSummary: async (range?: { from: string; to: string }): Promise<RevenueSummary> => {
+    const qs = range ? `?${buildQuery(range as unknown as Record<string, unknown>)}` : ''
+    const res = await request<{ data: RevenueSummary }>(`/revenue/summary${qs}`)
     return res.data
   },
 
   fetchByArticle: (params: SortParams): Promise<PaginatedResponse<RevenueByArticle>> => {
-    const qs = new URLSearchParams(params as unknown as Record<string, string>)
-    return request(`/revenue/by-article?${qs}`)
+    return request(`/revenue/by-article?${buildQuery(params as unknown as Record<string, unknown>)}`)
   },
 
   fetchByChannel: (params: SortParams): Promise<PaginatedResponse<RevenueByChannel>> => {
-    const qs = new URLSearchParams(params as unknown as Record<string, string>)
-    return request(`/revenue/by-channel?${qs}`)
+    return request(`/revenue/by-channel?${buildQuery(params as unknown as Record<string, unknown>)}`)
   },
 
-  fetchUnattributed: (params: { limit: number; offset: number }): Promise<PaginatedResponse<UnattributedRevenue>> => {
-    const qs = new URLSearchParams(params as unknown as Record<string, string>)
-    return request(`/revenue/unattributed?${qs}`)
+  fetchUnattributed: (params: PaginationParams): Promise<PaginatedResponse<UnattributedRevenue>> => {
+    return request(`/revenue/unattributed?${buildQuery(params as unknown as Record<string, unknown>)}`)
   },
 }

@@ -6,8 +6,10 @@ import { TableWrap, Table } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Pagination } from '@/components/ui/pagination'
 import { SkeletonRows } from '@/components/ui/skeleton'
+import { DateRangeFilter } from '@/components/ui/date-range-filter'
 import { useRevenueByArticle, useRevenueByChannel, useUnattributedRevenue } from '@/hooks/useRevenue'
 import { currency, number, shortDate, timeAgo } from '@/lib/formatters'
+import { type DatePreset, presetToRange } from '@/lib/date-presets'
 import type { RevenueByArticle, RevenueByChannel, UnattributedRevenue } from '@/types'
 
 const LIMIT = 20
@@ -16,6 +18,10 @@ type Tab = 'article' | 'channel' | 'unattributed'
 
 export default function RevenuePage() {
   const [tab, setTab] = useState<Tab>('article')
+
+  // Date filter state — default to "Today"
+  const [preset, setPreset] = useState<DatePreset>('today')
+  const [range, setRange] = useState(() => presetToRange('today'))
 
   const [artPage, setArtPage] = useState(1)
   const [artSort, setArtSort] = useState('total_revenue')
@@ -28,17 +34,17 @@ export default function RevenuePage() {
   const [uPage, setUPage] = useState(1)
 
   const { data: artData, isLoading: artLoading } = useRevenueByArticle(
-    { limit: LIMIT, offset: (artPage - 1) * LIMIT, sortBy: artSort, sortDir: artDir },
+    { limit: LIMIT, offset: (artPage - 1) * LIMIT, sortBy: artSort, sortDir: artDir, from: range.from, to: range.to },
     tab === 'article',
   )
 
   const { data: chData, isLoading: chLoading } = useRevenueByChannel(
-    { limit: LIMIT, offset: (chPage - 1) * LIMIT, sortBy: chSort, sortDir: chDir },
+    { limit: LIMIT, offset: (chPage - 1) * LIMIT, sortBy: chSort, sortDir: chDir, from: range.from, to: range.to },
     tab === 'channel',
   )
 
   const { data: uData, isLoading: uLoading } = useUnattributedRevenue(
-    { limit: LIMIT, offset: (uPage - 1) * LIMIT },
+    { limit: LIMIT, offset: (uPage - 1) * LIMIT, from: range.from, to: range.to },
     tab === 'unattributed',
   )
 
@@ -46,6 +52,14 @@ export default function RevenuePage() {
     if (current === col) setDir(dir === 'DESC' ? 'ASC' : 'DESC')
     else { setSort(col); setDir('DESC') }
     setPage(1)
+  }
+
+  function handleRangeChange(newRange: { from: string; to: string }, newPreset: DatePreset) {
+    setRange(newRange)
+    setPreset(newPreset)
+    setArtPage(1)
+    setChPage(1)
+    setUPage(1)
   }
 
   const artCols = [
@@ -56,25 +70,45 @@ export default function RevenuePage() {
     { key: 'total_clicks', label: 'Clicks', sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums">{number(r.total_clicks)}</span> },
     { key: 'total_revenue', label: 'Revenue', sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.total_revenue)}</span> },
     { key: 'rpm', label: 'RPM', sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums text-zinc-400">{r.rpm !== '0' ? currency(r.rpm) : '—'}</span> },
-  ]
+    { key: 'last_pulled_at', label: 'Last Updated', render: (r: RevenueByArticle) =>
+    r.last_pulled_at
+      ? <span className="text-xs text-zinc-400">{shortDate(r.last_pulled_at)}</span>
+      : <span className="text-zinc-600">—</span>
+},
+{ key: 'sync_age', label: 'Sync', render: (r: RevenueByArticle) =>
+    r.last_pulled_at
+      ? <span className="text-xs text-zinc-500">{timeAgo(r.last_pulled_at)}</span>
+      : <span className="text-zinc-600">—</span>
+},]
 
-  const chCols = [
-    { key: 'channel_id', label: 'Channel', render: (r: RevenueByChannel) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
-    { key: 'channel_status', label: 'Status', render: (r: RevenueByChannel) => <Badge status={r.channel_status} /> },
-    { key: 'articles_served', label: 'Articles Served', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.articles_served)}</span> },
-    { key: 'total_impressions', label: 'Impressions', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
-    { key: 'total_clicks', label: 'Clicks', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_clicks)}</span> },
-    { key: 'total_revenue', label: 'Revenue', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.total_revenue)}</span> },
-  ]
+const chCols = [
+  { key: 'channel_id', label: 'Channel', render: (r: RevenueByChannel) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
+  { key: 'channel_status', label: 'Status', render: (r: RevenueByChannel) => <Badge status={r.channel_status} /> },
+  { key: 'articles_served', label: 'Articles Served', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.articles_served)}</span> },
+  { key: 'total_impressions', label: 'Impressions', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
+  { key: 'total_clicks', label: 'Clicks', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_clicks)}</span> },
+  { key: 'total_revenue', label: 'Revenue', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.total_revenue)}</span> },
+  { key: 'last_pulled_at', label: 'Last Updated', render: (r: RevenueByChannel) =>
+      r.last_pulled_at
+        ? <span className="text-xs text-zinc-400">{shortDate(r.last_pulled_at)}</span>
+        : <span className="text-zinc-600">—</span>
+  },
+  { key: 'sync_age', label: 'Sync', render: (r: RevenueByChannel) =>
+      r.last_pulled_at
+        ? <span className="text-xs text-zinc-500">{timeAgo(r.last_pulled_at)}</span>
+        : <span className="text-zinc-600">—</span>
+  },
+]
 
-  const uCols = [
-    { key: 'channel', label: 'Channel', render: (r: UnattributedRevenue) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
-    { key: 'revenue', label: 'Revenue', render: (r: UnattributedRevenue) => <span className="tabular-nums font-semibold text-red-400">{currency(r.revenue)}</span> },
-    { key: 'impressions', label: 'Impressions', render: (r: UnattributedRevenue) => <span className="tabular-nums">{number(r.impressions)}</span> },
-    { key: 'period_start', label: 'Period Start', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.period_start)}</span> },
-    { key: 'period_end', label: 'Period End', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.period_end)}</span> },
-    { key: 'pulled_at', label: 'Pulled', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-500">{timeAgo(r.pulled_at)}</span> },
-  ]
+const uCols = [
+  { key: 'channel', label: 'Channel', render: (r: UnattributedRevenue) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
+  { key: 'revenue', label: 'Revenue', render: (r: UnattributedRevenue) => <span className="tabular-nums font-semibold text-red-400">{currency(r.revenue)}</span> },
+  { key: 'impressions', label: 'Impressions', render: (r: UnattributedRevenue) => <span className="tabular-nums">{number(r.impressions)}</span> },
+  { key: 'period_start', label: 'Period Start', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.period_start)}</span> },
+  { key: 'period_end', label: 'Period End', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.period_end)}</span> },
+  { key: 'pulled_at', label: 'Last Updated', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.pulled_at)}</span> },
+  { key: 'sync_age', label: 'Sync', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-500">{timeAgo(r.pulled_at)}</span> },
+]
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'article', label: 'By Article' },
@@ -86,22 +120,25 @@ export default function RevenuePage() {
     <div>
       <Header title="Revenue" subtitle="Materialized views refresh every 15 minutes" />
       <div className="p-6">
-        <div className="mb-5 flex gap-1 rounded-lg border border-white/[0.07] bg-[#161616] p-1 w-fit">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${tab === t.id ? 'bg-white/[0.08] text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex gap-1 rounded-lg border border-white/[0.07] bg-[#161616] p-1 w-fit">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${tab === t.id ? 'bg-white/[0.08] text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <DateRangeFilter value={range} preset={preset} onChange={handleRangeChange} />
         </div>
 
         {tab === 'article' && (
           <TableWrap title="Revenue by Article">
             {artLoading ? (
-              <table className="w-full"><tbody><SkeletonRows cols={7} /></tbody></table>
+              <table className="w-full"><tbody><SkeletonRows cols={9} /></tbody></table>
             ) : (
               <>
                 <Table
@@ -121,7 +158,7 @@ export default function RevenuePage() {
         {tab === 'channel' && (
           <TableWrap title="Revenue by Channel">
             {chLoading ? (
-              <table className="w-full"><tbody><SkeletonRows cols={6} /></tbody></table>
+              <table className="w-full"><tbody><SkeletonRows cols={8} /></tbody></table>
             ) : (
               <>
                 <Table
