@@ -48,7 +48,15 @@ function alertDesc(a: Alert): string {
 export default function OverviewPage() {
   const { data: stats } = useStats(REFRESH)
   const { data: summary } = useRevenueSummary(undefined, REFRESH)
-  const { data: topRevenue } = useRevenueByArticle({ limit: 8, offset: 0, sortBy: 'total_revenue', sortDir: 'DESC' })
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const { data: topRevenue } = useRevenueByArticle({
+    limit: 8,
+    offset: 0,
+    sortBy: 'total_revenue',
+    sortDir: 'DESC',
+    from: todayStr,
+    to: todayStr,
+  })
   const { data: alerts } = useAlerts(5, REFRESH)
 
   const total = (stats?.active_channels ?? 0) + (stats?.idle_channels ?? 0) + (stats?.disapproved_channels ?? 0)
