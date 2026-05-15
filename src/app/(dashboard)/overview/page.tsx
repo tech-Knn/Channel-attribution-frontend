@@ -47,7 +47,7 @@ function alertDesc(a: Alert): string {
 
 export default function OverviewPage() {
   const { data: stats } = useStats(REFRESH)
-  const { data: summary } = useRevenueSummary(REFRESH)
+  const { data: summary } = useRevenueSummary(undefined, REFRESH)
   const { data: topRevenue } = useRevenueByArticle({ limit: 8, offset: 0, sortBy: 'total_revenue', sortDir: 'DESC' })
   const { data: alerts } = useAlerts(5, REFRESH)
 
