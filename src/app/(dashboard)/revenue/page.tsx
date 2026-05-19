@@ -141,23 +141,28 @@ export default function RevenuePage() {
     { key: 'revenue',           label: 'Revenue',     sortable: true, render: (r: AssignmentRevenue) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.revenue)}</span> },
   ]
 
+  // "Lifetime" qualifier on impressions/clicks/revenue makes it unambiguous
+  // that these are summed across every assignment the article has ever had.
+  // Per-assignment breakdowns live on the Timeline tab.
+  const lifetimeHint = 'Summed across every channel this article has ever run on. See Timeline tab for the per-assignment breakdown.'
   const artCols = [
-    { key: 'article_id',        label: 'Article',     render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.article_id}</span> },
-    { key: 'url',               label: 'URL',         render: (r: RevenueByArticle) => r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="max-w-[220px] truncate block text-blue-400 hover:underline text-xs">{r.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 45)}</a> : <span className="text-zinc-600">—</span> },
-    { key: 'article_status',    label: 'Status',      render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
-    { key: 'total_impressions', label: 'Impressions', sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
-    { key: 'total_clicks',      label: 'Clicks',      sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums">{number(r.total_clicks)}</span> },
-    { key: 'total_revenue',     label: 'Revenue',     sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.total_revenue)}</span> },
-    { key: 'rpm',               label: 'RPM',         sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums text-zinc-400">{r.rpm !== '0' ? currency(r.rpm) : '—'}</span> },
+    { key: 'article_id',        label: 'Article',              render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.article_id}</span> },
+    { key: 'url',               label: 'URL',                  render: (r: RevenueByArticle) => r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="max-w-[220px] truncate block text-blue-400 hover:underline text-xs">{r.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 45)}</a> : <span className="text-zinc-600">—</span> },
+    { key: 'article_status',    label: 'Current Status',       render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
+    { key: 'total_impressions', label: 'Lifetime Impressions', sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums" title={lifetimeHint}>{number(r.total_impressions)}</span> },
+    { key: 'total_clicks',      label: 'Lifetime Clicks',      sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums" title={lifetimeHint}>{number(r.total_clicks)}</span> },
+    { key: 'total_revenue',     label: 'Lifetime Revenue',     sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums font-semibold text-emerald-400" title={lifetimeHint}>{currency(r.total_revenue)}</span> },
+    { key: 'rpm',               label: 'RPM',                  sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums text-zinc-400">{r.rpm !== '0' ? currency(r.rpm) : '—'}</span> },
   ]
 
+  const channelLifetimeHint = 'Summed across every article that has ever run on this channel. See Timeline tab for the per-assignment breakdown.'
   const chCols = [
-    { key: 'channel_id',        label: 'Channel',         render: (r: RevenueByChannel) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
-    { key: 'channel_status',    label: 'Status',          render: (r: RevenueByChannel) => <Badge status={r.channel_status} /> },
-    { key: 'articles_served',   label: 'Articles Served', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.articles_served)}</span> },
-    { key: 'total_impressions', label: 'Impressions',     sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
-    { key: 'total_clicks',      label: 'Clicks',          sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_clicks)}</span> },
-    { key: 'total_revenue',     label: 'Revenue',         sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.total_revenue)}</span> },
+    { key: 'channel_id',        label: 'Channel',              render: (r: RevenueByChannel) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
+    { key: 'channel_status',    label: 'Current Status',       render: (r: RevenueByChannel) => <Badge status={r.channel_status} /> },
+    { key: 'articles_served',   label: 'Articles Served',      sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.articles_served)}</span> },
+    { key: 'total_impressions', label: 'Lifetime Impressions', sortable: true, headerTitle: channelLifetimeHint, render: (r: RevenueByChannel) => <span className="tabular-nums" title={channelLifetimeHint}>{number(r.total_impressions)}</span> },
+    { key: 'total_clicks',      label: 'Lifetime Clicks',      sortable: true, headerTitle: channelLifetimeHint, render: (r: RevenueByChannel) => <span className="tabular-nums" title={channelLifetimeHint}>{number(r.total_clicks)}</span> },
+    { key: 'total_revenue',     label: 'Lifetime Revenue',     sortable: true, headerTitle: channelLifetimeHint, render: (r: RevenueByChannel) => <span className="tabular-nums font-semibold text-emerald-400" title={channelLifetimeHint}>{currency(r.total_revenue)}</span> },
   ]
 
   const uCols = [
