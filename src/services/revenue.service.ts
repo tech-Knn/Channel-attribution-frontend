@@ -1,5 +1,12 @@
 import { request } from '@/lib/api-client'
-import type { RevenueSummary, RevenueByArticle, RevenueByChannel, UnattributedRevenue, PaginatedResponse } from '@/types'
+import type {
+  RevenueSummary,
+  RevenueByArticle,
+  RevenueByChannel,
+  UnattributedRevenue,
+  AssignmentRevenue,
+  PaginatedResponse,
+} from '@/types'
 
 export interface SortParams {
   limit: number
@@ -15,6 +22,13 @@ export interface PaginationParams {
   offset: number
   from?: string
   to?: string
+}
+
+export interface AssignmentRevenueParams extends SortParams {
+  channelId?: string
+  articleId?: string
+  status?: 'active' | 'expired' | 'completed'
+  hideZero?: boolean
 }
 
 function buildQuery(params: Record<string, unknown>): string {
@@ -42,5 +56,9 @@ export const revenueService = {
 
   fetchUnattributed: (params: PaginationParams): Promise<PaginatedResponse<UnattributedRevenue>> => {
     return request(`/revenue/unattributed?${buildQuery(params as unknown as Record<string, unknown>)}`)
+  },
+
+  fetchByAssignment: (params: AssignmentRevenueParams): Promise<PaginatedResponse<AssignmentRevenue>> => {
+    return request(`/revenue/by-assignment?${buildQuery(params as unknown as Record<string, unknown>)}`)
   },
 }

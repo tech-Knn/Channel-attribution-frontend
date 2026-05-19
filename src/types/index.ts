@@ -1,7 +1,7 @@
 export type { PaginatedResponse } from './common.types'
 export type { Channel, IdleQueueEntry, IdleLoss } from './channel.types'
 export type { Assignment } from './assignment.types'
-export type { RevenueSummary, RevenueByArticle, RevenueByChannel, UnattributedRevenue } from './revenue.types'
+export type { RevenueSummary, RevenueByArticle, RevenueByChannel, UnattributedRevenue, AssignmentRevenue } from './revenue.types'
 export type { DashboardStats, Alert } from './stats.types'
 export * from './articles.types' //changes
 

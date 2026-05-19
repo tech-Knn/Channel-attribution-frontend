@@ -7,31 +7,67 @@ import { Badge } from '@/components/ui/badge'
 import { Pagination } from '@/components/ui/pagination'
 import { SkeletonRows } from '@/components/ui/skeleton'
 import { DateRangeFilter } from '@/components/ui/date-range-filter'
-import { useRevenueByArticle, useRevenueByChannel, useUnattributedRevenue } from '@/hooks/useRevenue'
+import {
+  useRevenueByArticle,
+  useRevenueByChannel,
+  useUnattributedRevenue,
+  useRevenueByAssignment,
+} from '@/hooks/useRevenue'
 import { currency, number, shortDate, timeAgo } from '@/lib/formatters'
 import { type DatePreset, presetToRange } from '@/lib/date-presets'
-import type { RevenueByArticle, RevenueByChannel, UnattributedRevenue } from '@/types'
+import type {
+  RevenueByArticle,
+  RevenueByChannel,
+  UnattributedRevenue,
+  AssignmentRevenue,
+} from '@/types'
 
 const LIMIT = 20
 
-type Tab = 'article' | 'channel' | 'unattributed'
+type Tab = 'timeline' | 'article' | 'channel' | 'unattributed'
 
 export default function RevenuePage() {
-  const [tab, setTab] = useState<Tab>('article')
+  // Timeline tab is the default — it's the most informative view (one row per
+  // channel-article-window with revenue) and answers the "which assignment
+  // earned what during which window" question directly. The other tabs are
+  // rollup summaries kept for drill-up.
+  const [tab, setTab] = useState<Tab>('timeline')
 
   // Date filter state — default to "Today"
   const [preset, setPreset] = useState<DatePreset>('today')
   const [range, setRange] = useState(() => presetToRange('today'))
 
+  // "Hide zero-revenue rows" toggle — applies to all tabs except Unattributed.
+  // Defaults to true to keep the dashboard scannable; users can flip it off
+  // to see every row (expired articles with no revenue, idle channels, etc.).
+  const [hideZero, setHideZero] = useState(true)
+
+  // ── Timeline tab state ────────────────────────────────────────────────
+  const [tlPage, setTlPage] = useState(1)
+  const [tlSort, setTlSort] = useState<'revenue' | 'assigned_at' | 'impressions' | 'clicks'>('revenue')
+  const [tlDir,  setTlDir]  = useState<'ASC' | 'DESC'>('DESC')
+
+  // ── Article tab state ─────────────────────────────────────────────────
   const [artPage, setArtPage] = useState(1)
   const [artSort, setArtSort] = useState('total_revenue')
-  const [artDir, setArtDir] = useState<'ASC' | 'DESC'>('DESC')
+  const [artDir,  setArtDir]  = useState<'ASC' | 'DESC'>('DESC')
 
+  // ── Channel tab state ─────────────────────────────────────────────────
   const [chPage, setChPage] = useState(1)
   const [chSort, setChSort] = useState('total_revenue')
-  const [chDir, setChDir] = useState<'ASC' | 'DESC'>('DESC')
+  const [chDir,  setChDir]  = useState<'ASC' | 'DESC'>('DESC')
 
+  // ── Unattributed tab state ────────────────────────────────────────────
   const [uPage, setUPage] = useState(1)
+
+  const { data: tlData, isLoading: tlLoading } = useRevenueByAssignment(
+    {
+      limit: LIMIT, offset: (tlPage - 1) * LIMIT,
+      sortBy: tlSort, sortDir: tlDir,
+      hideZero, from: range.from, to: range.to,
+    },
+    tab === 'timeline',
+  )
 
   const { data: artData, isLoading: artLoading } = useRevenueByArticle(
     { limit: LIMIT, offset: (artPage - 1) * LIMIT, sortBy: artSort, sortDir: artDir, from: range.from, to: range.to },
@@ -48,7 +84,14 @@ export default function RevenuePage() {
     tab === 'unattributed',
   )
 
-  function toggleSort(col: string, current: string, dir: 'ASC' | 'DESC', setSort: (s: string) => void, setDir: (d: 'ASC' | 'DESC') => void, setPage: (p: number) => void) {
+  function toggleSort<S extends string>(
+    col: S,
+    current: S,
+    dir: 'ASC' | 'DESC',
+    setSort: (s: S) => void,
+    setDir: (d: 'ASC' | 'DESC') => void,
+    setPage: (p: number) => void,
+  ) {
     if (current === col) setDir(dir === 'DESC' ? 'ASC' : 'DESC')
     else { setSort(col); setDir('DESC') }
     setPage(1)
@@ -57,62 +100,67 @@ export default function RevenuePage() {
   function handleRangeChange(newRange: { from: string; to: string }, newPreset: DatePreset) {
     setRange(newRange)
     setPreset(newPreset)
+    setTlPage(1)
     setArtPage(1)
     setChPage(1)
     setUPage(1)
   }
 
+  // ── Client-side zero-revenue filter for rollup tabs ─────────────────────
+  // Timeline endpoint applies hideZero server-side. By Article / By Channel
+  // endpoints don't yet accept the flag, so filter client-side for parity.
+  const visibleArticles = (artData?.data ?? []).filter(
+    (r: RevenueByArticle) => !hideZero || Number(r.total_revenue) > 0,
+  )
+  const visibleChannels = (chData?.data ?? []).filter(
+    (r: RevenueByChannel) => !hideZero || Number(r.total_revenue) > 0,
+  )
+
+  // ── Column defs ────────────────────────────────────────────────────────
+
+  const tlCols = [
+    { key: 'channel_id',        label: 'Channel',     render: (r: AssignmentRevenue) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
+    { key: 'article_id',        label: 'Article',     render: (r: AssignmentRevenue) => <span className="font-mono text-xs text-zinc-300">{r.article_id}</span> },
+    { key: 'assigned_at',       label: 'From',        sortable: true, render: (r: AssignmentRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.assigned_at)}</span> },
+    { key: 'unassigned_at',     label: 'To',          render: (r: AssignmentRevenue) => r.unassigned_at ? <span className="text-xs text-zinc-400">{shortDate(r.unassigned_at)}</span> : <Badge status="active" /> },
+    { key: 'assignment_status', label: 'Status',      render: (r: AssignmentRevenue) => <Badge status={r.assignment_status} /> },
+    { key: 'impressions',       label: 'Impressions', sortable: true, render: (r: AssignmentRevenue) => <span className="tabular-nums">{number(r.impressions)}</span> },
+    { key: 'clicks',            label: 'Clicks',      sortable: true, render: (r: AssignmentRevenue) => <span className="tabular-nums">{number(r.clicks)}</span> },
+    { key: 'revenue',           label: 'Revenue',     sortable: true, render: (r: AssignmentRevenue) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.revenue)}</span> },
+  ]
+
   const artCols = [
-    { key: 'article_id', label: 'Article', render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.article_id}</span> },
-    { key: 'url', label: 'URL', render: (r: RevenueByArticle) => r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="max-w-[220px] truncate block text-blue-400 hover:underline text-xs">{r.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 45)}</a> : <span className="text-zinc-600">—</span> },
-    { key: 'article_status', label: 'Status', render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
+    { key: 'article_id',        label: 'Article',     render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.article_id}</span> },
+    { key: 'url',               label: 'URL',         render: (r: RevenueByArticle) => r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="max-w-[220px] truncate block text-blue-400 hover:underline text-xs">{r.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 45)}</a> : <span className="text-zinc-600">—</span> },
+    { key: 'article_status',    label: 'Status',      render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
     { key: 'total_impressions', label: 'Impressions', sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
-    { key: 'total_clicks', label: 'Clicks', sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums">{number(r.total_clicks)}</span> },
-    { key: 'total_revenue', label: 'Revenue', sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.total_revenue)}</span> },
-    { key: 'rpm', label: 'RPM', sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums text-zinc-400">{r.rpm !== '0' ? currency(r.rpm) : '—'}</span> },
-    { key: 'last_pulled_at', label: 'Last Updated', render: (r: RevenueByArticle) =>
-    r.last_pulled_at
-      ? <span className="text-xs text-zinc-400">{shortDate(r.last_pulled_at)}</span>
-      : <span className="text-zinc-600">—</span>
-},
-{ key: 'sync_age', label: 'Sync', render: (r: RevenueByArticle) =>
-    r.last_pulled_at
-      ? <span className="text-xs text-zinc-500">{timeAgo(r.last_pulled_at)}</span>
-      : <span className="text-zinc-600">—</span>
-},]
+    { key: 'total_clicks',      label: 'Clicks',      sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums">{number(r.total_clicks)}</span> },
+    { key: 'total_revenue',     label: 'Revenue',     sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.total_revenue)}</span> },
+    { key: 'rpm',               label: 'RPM',         sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums text-zinc-400">{r.rpm !== '0' ? currency(r.rpm) : '—'}</span> },
+  ]
 
-const chCols = [
-  { key: 'channel_id', label: 'Channel', render: (r: RevenueByChannel) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
-  { key: 'channel_status', label: 'Status', render: (r: RevenueByChannel) => <Badge status={r.channel_status} /> },
-  { key: 'articles_served', label: 'Articles Served', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.articles_served)}</span> },
-  { key: 'total_impressions', label: 'Impressions', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
-  { key: 'total_clicks', label: 'Clicks', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_clicks)}</span> },
-  { key: 'total_revenue', label: 'Revenue', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.total_revenue)}</span> },
-  { key: 'last_pulled_at', label: 'Last Updated', render: (r: RevenueByChannel) =>
-      r.last_pulled_at
-        ? <span className="text-xs text-zinc-400">{shortDate(r.last_pulled_at)}</span>
-        : <span className="text-zinc-600">—</span>
-  },
-  { key: 'sync_age', label: 'Sync', render: (r: RevenueByChannel) =>
-      r.last_pulled_at
-        ? <span className="text-xs text-zinc-500">{timeAgo(r.last_pulled_at)}</span>
-        : <span className="text-zinc-600">—</span>
-  },
-]
+  const chCols = [
+    { key: 'channel_id',        label: 'Channel',         render: (r: RevenueByChannel) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
+    { key: 'channel_status',    label: 'Status',          render: (r: RevenueByChannel) => <Badge status={r.channel_status} /> },
+    { key: 'articles_served',   label: 'Articles Served', sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.articles_served)}</span> },
+    { key: 'total_impressions', label: 'Impressions',     sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
+    { key: 'total_clicks',      label: 'Clicks',          sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.total_clicks)}</span> },
+    { key: 'total_revenue',     label: 'Revenue',         sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.total_revenue)}</span> },
+  ]
 
-const uCols = [
-  { key: 'channel', label: 'Channel', render: (r: UnattributedRevenue) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
-  { key: 'revenue', label: 'Revenue', render: (r: UnattributedRevenue) => <span className="tabular-nums font-semibold text-red-400">{currency(r.revenue)}</span> },
-  { key: 'impressions', label: 'Impressions', render: (r: UnattributedRevenue) => <span className="tabular-nums">{number(r.impressions)}</span> },
-  { key: 'period_start', label: 'Period Start', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.period_start)}</span> },
-  { key: 'period_end', label: 'Period End', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.period_end)}</span> },
-  { key: 'pulled_at', label: 'Last Updated', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.pulled_at)}</span> },
-  { key: 'sync_age', label: 'Sync', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-500">{timeAgo(r.pulled_at)}</span> },
-]
+  const uCols = [
+    { key: 'channel',      label: 'Channel',      render: (r: UnattributedRevenue) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
+    { key: 'revenue',      label: 'Revenue',      render: (r: UnattributedRevenue) => <span className="tabular-nums font-semibold text-red-400">{currency(r.revenue)}</span> },
+    { key: 'impressions',  label: 'Impressions',  render: (r: UnattributedRevenue) => <span className="tabular-nums">{number(r.impressions)}</span> },
+    { key: 'period_start', label: 'Period Start', render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.period_start)}</span> },
+    { key: 'period_end',   label: 'Period End',   render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.period_end)}</span> },
+    { key: 'pulled_at',    label: 'Pulled',       render: (r: UnattributedRevenue) => <span className="text-xs text-zinc-500">{timeAgo(r.pulled_at)}</span> },
+  ]
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'article', label: 'By Article' },
-    { id: 'channel', label: 'By Channel' },
+    { id: 'timeline',     label: 'Timeline' },
+    { id: 'article',      label: 'By Article' },
+    { id: 'channel',      label: 'By Channel' },
     { id: 'unattributed', label: 'Unattributed' },
   ]
 
@@ -120,7 +168,7 @@ const uCols = [
     <div>
       <Header title="Revenue" subtitle="Materialized views refresh every 15 minutes" />
       <div className="p-6">
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-5 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex gap-1 rounded-lg border border-white/[0.07] bg-[#161616] p-1 w-fit">
             {tabs.map((t) => (
               <button
@@ -132,18 +180,51 @@ const uCols = [
               </button>
             ))}
           </div>
-          <DateRangeFilter value={range} preset={preset} onChange={handleRangeChange} />
+          <div className="flex items-center gap-3 flex-wrap">
+            {tab !== 'unattributed' && (
+              <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hideZero}
+                  onChange={(e) => setHideZero(e.target.checked)}
+                  className="accent-emerald-500 h-3.5 w-3.5"
+                />
+                Hide $0 rows
+              </label>
+            )}
+            <DateRangeFilter preset={preset} value={range} onChange={handleRangeChange} />
+          </div>
         </div>
+
+        {tab === 'timeline' && (
+          <TableWrap title="Channel × Article Timeline">
+            {tlLoading ? (
+              <table className="w-full"><tbody><SkeletonRows cols={8} /></tbody></table>
+            ) : (
+              <>
+                <Table
+                  columns={tlCols}
+                  data={tlData?.data ?? []}
+                  sortBy={tlSort}
+                  sortDir={tlDir}
+                  onSort={(col) => toggleSort(col as typeof tlSort, tlSort, tlDir, setTlSort, setTlDir, setTlPage)}
+                  emptyMessage={hideZero ? 'No revenue-earning assignments in range. Toggle "Hide $0 rows" off to see all assignments.' : 'No assignments in the selected range.'}
+                />
+                {tlData && <Pagination page={tlPage} totalPages={Math.ceil(tlData.total / LIMIT)} total={tlData.total} limit={LIMIT} onPage={setTlPage} />}
+              </>
+            )}
+          </TableWrap>
+        )}
 
         {tab === 'article' && (
           <TableWrap title="Revenue by Article">
             {artLoading ? (
-              <table className="w-full"><tbody><SkeletonRows cols={9} /></tbody></table>
+              <table className="w-full"><tbody><SkeletonRows cols={7} /></tbody></table>
             ) : (
               <>
                 <Table
                   columns={artCols}
-                  data={artData?.data ?? []}
+                  data={visibleArticles}
                   sortBy={artSort}
                   sortDir={artDir}
                   onSort={(col) => toggleSort(col, artSort, artDir, setArtSort, setArtDir, setArtPage)}
@@ -158,12 +239,12 @@ const uCols = [
         {tab === 'channel' && (
           <TableWrap title="Revenue by Channel">
             {chLoading ? (
-              <table className="w-full"><tbody><SkeletonRows cols={8} /></tbody></table>
+              <table className="w-full"><tbody><SkeletonRows cols={6} /></tbody></table>
             ) : (
               <>
                 <Table
                   columns={chCols}
-                  data={chData?.data ?? []}
+                  data={visibleChannels}
                   sortBy={chSort}
                   sortDir={chDir}
                   onSort={(col) => toggleSort(col, chSort, chDir, setChSort, setChDir, setChPage)}

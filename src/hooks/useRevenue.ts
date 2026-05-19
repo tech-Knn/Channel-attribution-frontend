@@ -1,5 +1,10 @@
 import useSWR from 'swr'
-import { revenueService, type SortParams, type PaginationParams } from '@/services/revenue.service'
+import {
+  revenueService,
+  type SortParams,
+  type PaginationParams,
+  type AssignmentRevenueParams,
+} from '@/services/revenue.service'
 
 export function useRevenueSummary(
   range?: { from: string; to: string },
@@ -32,6 +37,14 @@ export function useUnattributedRevenue(params: PaginationParams, enabled = true)
   return useSWR(
     enabled ? ['rev-unattr', params] : null,
     () => revenueService.fetchUnattributed(params),
+    { refreshInterval: 60_000 },
+  )
+}
+
+export function useRevenueByAssignment(params: AssignmentRevenueParams, enabled = true) {
+  return useSWR(
+    enabled ? ['rev-asn', params] : null,
+    () => revenueService.fetchByAssignment(params),
     { refreshInterval: 60_000 },
   )
 }

@@ -54,3 +54,17 @@ export interface UnattributedRevenue {
   period_end: string
   pulled_at: string
 }
+
+// One row per channel-article assignment lifecycle, from v_assignment_revenue.
+// Drives the "Timeline" tab on the Revenue page — see /api/revenue/by-assignment.
+export interface AssignmentRevenue {
+  assignment_id: string
+  channel_id: string
+  article_id: string
+  assigned_at: string
+  unassigned_at: string | null
+  assignment_status: 'active' | 'expired' | 'completed'
+  impressions: number
+  clicks: number
+  revenue: string
+}
