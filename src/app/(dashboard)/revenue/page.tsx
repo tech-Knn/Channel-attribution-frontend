@@ -109,11 +109,23 @@ export default function RevenuePage() {
   // ── Client-side zero-revenue filter for rollup tabs ─────────────────────
   // Timeline endpoint applies hideZero server-side. By Article / By Channel
   // endpoints don't yet accept the flag, so filter client-side for parity.
+  //
+  // hideZero only hides CLOSED entities with $0. Currently-live rows
+  // (article assigned/active, channel assigned) always show because they
+  // represent live state — e.g. an article that was just reactivated to a
+  // new channel hasn't earned anything yet but must be visible.
   const visibleArticles = (artData?.data ?? []).filter(
-    (r: RevenueByArticle) => !hideZero || Number(r.total_revenue) > 0,
+    (r: RevenueByArticle) =>
+      !hideZero ||
+      Number(r.total_revenue) > 0 ||
+      r.article_status === 'assigned' ||
+      r.article_status === 'active',
   )
   const visibleChannels = (chData?.data ?? []).filter(
-    (r: RevenueByChannel) => !hideZero || Number(r.total_revenue) > 0,
+    (r: RevenueByChannel) =>
+      !hideZero ||
+      Number(r.total_revenue) > 0 ||
+      r.channel_status === 'assigned',
   )
 
   // ── Column defs ────────────────────────────────────────────────────────
