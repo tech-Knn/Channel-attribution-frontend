@@ -46,6 +46,10 @@ export default function RevenuePage() {
   const [tlPage, setTlPage] = useState(1)
   const [tlSort, setTlSort] = useState<'revenue' | 'assigned_at' | 'impressions' | 'clicks'>('revenue')
   const [tlDir,  setTlDir]  = useState<'ASC' | 'DESC'>('DESC')
+  // Timeline filters: empty string = no filter. Server-side, so total/pagination
+  // reflect the filtered subset.
+  const [tlChannel, setTlChannel] = useState('')
+  const [tlArticle, setTlArticle] = useState('')
 
   // ── Article tab state ─────────────────────────────────────────────────
   const [artPage, setArtPage] = useState(1)
@@ -65,6 +69,8 @@ export default function RevenuePage() {
       limit: LIMIT, offset: (tlPage - 1) * LIMIT,
       sortBy: tlSort, sortDir: tlDir,
       hideZero, from: range.from, to: range.to,
+      channelId: tlChannel.trim() || undefined,
+      articleId: tlArticle.trim() || undefined,
     },
     tab === 'timeline',
   )
@@ -131,8 +137,26 @@ export default function RevenuePage() {
   // ── Column defs ────────────────────────────────────────────────────────
 
   const tlCols = [
-    { key: 'channel_id',        label: 'Channel',     render: (r: AssignmentRevenue) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
-    { key: 'article_id',        label: 'Article',     render: (r: AssignmentRevenue) => <span className="font-mono text-xs text-zinc-300">{r.article_id}</span> },
+    {
+      key: 'channel_id', label: 'Channel',
+      render: (r: AssignmentRevenue) => (
+        <button
+          onClick={() => { setTlChannel(r.channel_id); setTlPage(1) }}
+          className="font-mono text-xs text-zinc-400 hover:text-emerald-400 hover:underline cursor-pointer"
+          title="Filter timeline by this channel"
+        >{r.channel_id}</button>
+      ),
+    },
+    {
+      key: 'article_id', label: 'Article',
+      render: (r: AssignmentRevenue) => (
+        <button
+          onClick={() => { setTlArticle(r.article_id); setTlPage(1) }}
+          className="font-mono text-xs text-zinc-300 hover:text-emerald-400 hover:underline cursor-pointer text-left"
+          title="Filter timeline by this article"
+        >{r.article_id}</button>
+      ),
+    },
     { key: 'assigned_at',       label: 'From',        sortable: true, render: (r: AssignmentRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.assigned_at)}</span> },
     { key: 'unassigned_at',     label: 'To',          render: (r: AssignmentRevenue) => r.unassigned_at ? <span className="text-xs text-zinc-400">{shortDate(r.unassigned_at)}</span> : <Badge status="active" /> },
     { key: 'assignment_status', label: 'Status',      render: (r: AssignmentRevenue) => <Badge status={r.assignment_status} /> },
@@ -214,23 +238,74 @@ export default function RevenuePage() {
         </div>
 
         {tab === 'timeline' && (
-          <TableWrap title="Channel × Article Timeline">
-            {tlLoading ? (
-              <table className="w-full"><tbody><SkeletonRows cols={8} /></tbody></table>
-            ) : (
-              <>
-                <Table
-                  columns={tlCols}
-                  data={tlData?.data ?? []}
-                  sortBy={tlSort}
-                  sortDir={tlDir}
-                  onSort={(col) => toggleSort(col as typeof tlSort, tlSort, tlDir, setTlSort, setTlDir, setTlPage)}
-                  emptyMessage={hideZero ? 'No revenue-earning assignments in range. Toggle "Hide $0 rows" off to see all assignments.' : 'No assignments in the selected range.'}
+          <>
+            {/* Bifurcation controls — server-side filter by channel and/or article. */}
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={tlChannel}
+                  onChange={(e) => { setTlChannel(e.target.value); setTlPage(1) }}
+                  placeholder="Filter by channel id…"
+                  className="w-56 rounded-md border border-white/[0.07] bg-[#161616] px-3 py-1.5 pr-7 text-xs text-zinc-200 placeholder-zinc-600 focus:border-white/[0.2] focus:outline-none font-mono"
                 />
-                {tlData && <Pagination page={tlPage} totalPages={Math.ceil(tlData.total / LIMIT)} total={tlData.total} limit={LIMIT} onPage={setTlPage} />}
-              </>
-            )}
-          </TableWrap>
+                {tlChannel && (
+                  <button
+                    onClick={() => { setTlChannel(''); setTlPage(1) }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200 text-xs"
+                    aria-label="Clear channel filter"
+                  >×</button>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={tlArticle}
+                  onChange={(e) => { setTlArticle(e.target.value); setTlPage(1) }}
+                  placeholder="Filter by article id…"
+                  className="w-72 rounded-md border border-white/[0.07] bg-[#161616] px-3 py-1.5 pr-7 text-xs text-zinc-200 placeholder-zinc-600 focus:border-white/[0.2] focus:outline-none font-mono"
+                />
+                {tlArticle && (
+                  <button
+                    onClick={() => { setTlArticle(''); setTlPage(1) }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200 text-xs"
+                    aria-label="Clear article filter"
+                  >×</button>
+                )}
+              </div>
+              {(tlChannel || tlArticle) && (
+                <button
+                  onClick={() => { setTlChannel(''); setTlArticle(''); setTlPage(1) }}
+                  className="text-xs text-zinc-500 hover:text-zinc-200 px-2 py-1.5"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+            <TableWrap title="Channel × Article Timeline">
+              {tlLoading ? (
+                <table className="w-full"><tbody><SkeletonRows cols={8} /></tbody></table>
+              ) : (
+                <>
+                  <Table
+                    columns={tlCols}
+                    data={tlData?.data ?? []}
+                    sortBy={tlSort}
+                    sortDir={tlDir}
+                    onSort={(col) => toggleSort(col as typeof tlSort, tlSort, tlDir, setTlSort, setTlDir, setTlPage)}
+                    emptyMessage={
+                      tlChannel || tlArticle
+                        ? 'No assignments match the current filter.'
+                        : hideZero
+                          ? 'No revenue-earning assignments in range. Toggle "Hide $0 rows" off to see all assignments.'
+                          : 'No assignments in the selected range.'
+                    }
+                  />
+                  {tlData && <Pagination page={tlPage} totalPages={Math.ceil(tlData.total / LIMIT)} total={tlData.total} limit={LIMIT} onPage={setTlPage} />}
+                </>
+              )}
+            </TableWrap>
+          </>
         )}
 
         {tab === 'article' && (
