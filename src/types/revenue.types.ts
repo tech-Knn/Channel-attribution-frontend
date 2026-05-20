@@ -25,6 +25,9 @@ export interface RevenueByArticle {
   category: string | null
   published_at: string
   article_status: string
+  reactivated_at: string | null      // populated when the article has been through a reactivation cycle
+  current_channel_id: string | null  // channel currently serving this article (null = no active assignment)
+  channels_used: string              // count of distinct channels this article has run on (lifetime)
   total_impressions: string
   total_clicks: string
   total_revenue: string
@@ -37,6 +40,7 @@ export interface RevenueByChannel {
   db_id: string
   channel_id: string
   channel_status: string
+  current_article_id: string | null  // article currently assigned to this channel (null = idle)
   articles_served: string
   total_impressions: string
   total_clicks: string

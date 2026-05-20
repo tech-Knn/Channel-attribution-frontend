@@ -170,9 +170,31 @@ export default function RevenuePage() {
   // Per-assignment breakdowns live on the Timeline tab.
   const lifetimeHint = 'Summed across every channel this article has ever run on. See Timeline tab for the per-assignment breakdown.'
   const artCols = [
-    { key: 'article_id',        label: 'Article',              render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.article_id}</span> },
+    {
+      key: 'article_id', label: 'Article',
+      render: (r: RevenueByArticle) => (
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-xs text-zinc-400">{r.article_id}</span>
+          {/* ↻ badge surfaces articles that have been through a pageview-threshold
+              reactivation — useful signal that the article ran on multiple channels. */}
+          {r.reactivated_at && (
+            <span
+              className="inline-flex items-center gap-0.5 rounded bg-amber-500/[0.15] px-1.5 py-0.5 text-[10px] font-semibold text-amber-300 leading-none"
+              title={`Reactivated ${new Date(r.reactivated_at).toLocaleString()} — this article was re-assigned to a channel after expiring.`}
+            >↻ REACTIVATED</span>
+          )}
+        </div>
+      ),
+    },
     { key: 'url',               label: 'URL',                  render: (r: RevenueByArticle) => r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="max-w-[220px] truncate block text-blue-400 hover:underline text-xs">{r.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 45)}</a> : <span className="text-zinc-600">—</span> },
     { key: 'article_status',    label: 'Current Status',       render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
+    {
+      key: 'current_channel_id', label: 'Current Channel',
+      render: (r: RevenueByArticle) =>
+        r.current_channel_id
+          ? <span className="font-mono text-xs text-zinc-300">{r.current_channel_id}</span>
+          : <span className="text-zinc-600">—</span>,
+    },
     { key: 'total_impressions', label: 'Lifetime Impressions', sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums" title={lifetimeHint}>{number(r.total_impressions)}</span> },
     { key: 'total_clicks',      label: 'Lifetime Clicks',      sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums" title={lifetimeHint}>{number(r.total_clicks)}</span> },
     { key: 'total_revenue',     label: 'Lifetime Revenue',     sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums font-semibold text-emerald-400" title={lifetimeHint}>{currency(r.total_revenue)}</span> },
@@ -183,6 +205,13 @@ export default function RevenuePage() {
   const chCols = [
     { key: 'channel_id',        label: 'Channel',              render: (r: RevenueByChannel) => <span className="font-mono text-xs text-zinc-400">{r.channel_id}</span> },
     { key: 'channel_status',    label: 'Current Status',       render: (r: RevenueByChannel) => <Badge status={r.channel_status} /> },
+    {
+      key: 'current_article_id', label: 'Current Article',
+      render: (r: RevenueByChannel) =>
+        r.current_article_id
+          ? <span className="font-mono text-xs text-zinc-300">{r.current_article_id}</span>
+          : <span className="text-zinc-600">—</span>,
+    },
     { key: 'articles_served',   label: 'Articles Served',      sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums">{number(r.articles_served)}</span> },
     { key: 'total_impressions', label: 'Lifetime Impressions', sortable: true, headerTitle: channelLifetimeHint, render: (r: RevenueByChannel) => <span className="tabular-nums" title={channelLifetimeHint}>{number(r.total_impressions)}</span> },
     { key: 'total_clicks',      label: 'Lifetime Clicks',      sortable: true, headerTitle: channelLifetimeHint, render: (r: RevenueByChannel) => <span className="tabular-nums" title={channelLifetimeHint}>{number(r.total_clicks)}</span> },
