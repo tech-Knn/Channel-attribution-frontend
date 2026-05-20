@@ -140,6 +140,9 @@ export default function RevenuePage() {
   const visibleChannels = (chData?.data ?? []).filter(
     (r: RevenueByChannel) => !hideZero || Number(r.total_revenue) > 0,
   )
+  const visibleUnattributed = (uData?.data ?? []).filter(
+    (r: UnattributedRevenue) => !hideZero || Number(r.revenue) > 0,
+  )
 
   // ── Column defs ────────────────────────────────────────────────────────
 
@@ -310,17 +313,15 @@ export default function RevenuePage() {
             ))}
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            {tab !== 'unattributed' && (
-              <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={hideZero}
-                  onChange={(e) => setHideZero(e.target.checked)}
-                  className="accent-emerald-500 h-3.5 w-3.5"
-                />
-                Hide $0 rows
-              </label>
-            )}
+            <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={hideZero}
+                onChange={(e) => setHideZero(e.target.checked)}
+                className="accent-emerald-500 h-3.5 w-3.5"
+              />
+              Hide $0 rows
+            </label>
             <DateRangeFilter preset={preset} value={range} onChange={handleRangeChange} />
           </div>
         </div>
@@ -442,7 +443,7 @@ export default function RevenuePage() {
               <table className="w-full"><tbody><SkeletonRows cols={6} /></tbody></table>
             ) : (
               <>
-                <Table columns={uCols} data={uData?.data ?? []} emptyMessage="No unattributed revenue" />
+                <Table columns={uCols} data={visibleUnattributed} emptyMessage={hideZero ? 'No unattributed rows with revenue > $0. Uncheck "Hide $0 rows" to see orphan-impressions events.' : 'No unattributed revenue'} />
                 {uData && <Pagination page={uPage} totalPages={Math.ceil(uData.total / LIMIT)} total={uData.total} limit={LIMIT} onPage={setUPage} />}
               </>
             )}
