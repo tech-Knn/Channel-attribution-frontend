@@ -225,7 +225,23 @@ export default function RevenuePage() {
     // ── lifetime cohort ──
     { key: 'total_impressions', label: 'Lifetime Impressions', sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums text-zinc-500" title={lifetimeHint}>{number(r.total_impressions)}</span> },
     { key: 'total_clicks',      label: 'Lifetime Clicks',      sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums text-zinc-500" title={lifetimeHint}>{number(r.total_clicks)}</span> },
-    { key: 'total_revenue',     label: 'Lifetime Revenue',     sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums font-semibold text-emerald-500/80" title={lifetimeHint}>{currency(r.total_revenue)}</span> },
+    {
+      key: 'total_revenue', label: 'Lifetime Revenue', sortable: true, headerTitle: lifetimeHint,
+      render: (r: RevenueByArticle) => (
+        Number(r.total_revenue) > 0 ? (
+          <button
+            onClick={() => drillToArticle(r.article_id)}
+            className="tabular-nums font-semibold text-emerald-500/80 hover:text-emerald-300 hover:underline cursor-pointer inline-flex items-center gap-0.5"
+            title="See the per-channel breakdown of this lifetime revenue in Timeline"
+          >
+            {currency(r.total_revenue)}
+            <span className="text-[10px] opacity-60">↗</span>
+          </button>
+        ) : (
+          <span className="tabular-nums text-zinc-600" title={lifetimeHint}>{currency(r.total_revenue)}</span>
+        )
+      ),
+    },
     { key: 'rpm',               label: 'RPM',                  sortable: true, render: (r: RevenueByArticle) => <span className="tabular-nums text-zinc-400">{r.rpm !== '0' ? currency(r.rpm) : '—'}</span> },
   ]
 
@@ -251,7 +267,23 @@ export default function RevenuePage() {
     { key: 'articles_served',   label: 'Articles Served',      sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums text-zinc-500">{number(r.articles_served)}</span> },
     { key: 'total_impressions', label: 'Lifetime Impressions', sortable: true, headerTitle: channelLifetimeHint, render: (r: RevenueByChannel) => <span className="tabular-nums text-zinc-500" title={channelLifetimeHint}>{number(r.total_impressions)}</span> },
     { key: 'total_clicks',      label: 'Lifetime Clicks',      sortable: true, headerTitle: channelLifetimeHint, render: (r: RevenueByChannel) => <span className="tabular-nums text-zinc-500" title={channelLifetimeHint}>{number(r.total_clicks)}</span> },
-    { key: 'total_revenue',     label: 'Lifetime Revenue',     sortable: true, headerTitle: channelLifetimeHint, render: (r: RevenueByChannel) => <span className="tabular-nums font-semibold text-emerald-500/80" title={channelLifetimeHint}>{currency(r.total_revenue)}</span> },
+    {
+      key: 'total_revenue', label: 'Lifetime Revenue', sortable: true, headerTitle: channelLifetimeHint,
+      render: (r: RevenueByChannel) => (
+        Number(r.total_revenue) > 0 ? (
+          <button
+            onClick={() => drillToChannel(r.channel_id)}
+            className="tabular-nums font-semibold text-emerald-500/80 hover:text-emerald-300 hover:underline cursor-pointer inline-flex items-center gap-0.5"
+            title="See the per-article breakdown of this lifetime revenue in Timeline"
+          >
+            {currency(r.total_revenue)}
+            <span className="text-[10px] opacity-60">↗</span>
+          </button>
+        ) : (
+          <span className="tabular-nums text-zinc-600" title={channelLifetimeHint}>{currency(r.total_revenue)}</span>
+        )
+      ),
+    },
   ]
 
   const uCols = [
