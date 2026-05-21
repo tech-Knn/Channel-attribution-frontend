@@ -5,13 +5,16 @@ import { usePathname } from 'next/navigation'
 import { clearToken } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 
+// Alerts panel removed from the sidebar — the Overview page already shows
+// Recent Alerts and Revenue Lost to Idle Time. Keeping a separate tab was
+// duplicate surface area for the same data. The /alerts page route still
+// exists so any saved bookmarks keep working.
 const nav = [
   { href: '/overview',     label: 'Overview' },
-  { href: '/articles',     label: 'Articles' }, //changes
+  { href: '/articles',     label: 'Articles' },
   { href: '/revenue',      label: 'Revenue' },
   { href: '/channels',     label: 'Channels' },
   { href: '/assignments',  label: 'Assignments' },
-  { href: '/alerts',       label: 'Alerts' },
 ]
 
 export function Sidebar() {
