@@ -168,7 +168,18 @@ export default function RevenuePage() {
       ),
     },
     { key: 'assigned_at',       label: 'From',        sortable: true, render: (r: AssignmentRevenue) => <span className="text-xs text-zinc-400">{shortDate(r.assigned_at)}</span> },
-    { key: 'unassigned_at',     label: 'To',          render: (r: AssignmentRevenue) => r.unassigned_at ? <span className="text-xs text-zinc-400">{shortDate(r.unassigned_at)}</span> : <Badge status="active" /> },
+    {
+      key: 'unassigned_at', label: 'To',
+      // For closed assignments, show the actual unassigned_at date.
+      // For active ones, show today's date in emerald so the row reads
+      // "from → today" (i.e. still running through this moment). When the
+      // assignment closes, this cell will switch to the recorded
+      // unassigned_at date automatically.
+      render: (r: AssignmentRevenue) =>
+        r.unassigned_at
+          ? <span className="text-xs text-zinc-400">{shortDate(r.unassigned_at)}</span>
+          : <span className="text-xs text-emerald-400" title="Still active — through today">{shortDate(new Date().toISOString())}</span>,
+    },
     { key: 'assignment_status', label: 'Status',      render: (r: AssignmentRevenue) => <Badge status={r.assignment_status} /> },
     { key: 'impressions',       label: 'Impressions', sortable: true, render: (r: AssignmentRevenue) => <span className="tabular-nums">{number(r.impressions)}</span> },
     { key: 'clicks',            label: 'Clicks',      sortable: true, render: (r: AssignmentRevenue) => <span className="tabular-nums">{number(r.clicks)}</span> },
