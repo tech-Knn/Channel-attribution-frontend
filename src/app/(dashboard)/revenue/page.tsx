@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Header } from '@/components/layout/header'
 import { TableWrap, Table } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { ReactivationBadge } from '@/components/ui/reactivation-badge'
 import { Pagination } from '@/components/ui/pagination'
 import { SkeletonRows } from '@/components/ui/skeleton'
 import { DateRangeFilter } from '@/components/ui/date-range-filter'
@@ -204,11 +205,11 @@ export default function RevenuePage() {
             className="font-mono text-xs text-zinc-300 hover:text-emerald-400 hover:underline cursor-pointer text-left"
             title="Open in Timeline — see this article's per-channel revenue history"
           >{r.article_id}</button>
-          {r.reactivated_at && (
-            <span
-              className="inline-flex items-center gap-0.5 rounded bg-amber-500/[0.15] px-1.5 py-0.5 text-[10px] font-semibold text-amber-300 leading-none"
-              title={`Reactivated ${new Date(r.reactivated_at).toLocaleString()} — this article was re-assigned to a channel after expiring.`}
-            >↻ REACTIVATED</span>
+          {Number(r.reactivation_count) > 0 && (
+            <ReactivationBadge
+              count={Number(r.reactivation_count)}
+              lastAt={r.reactivated_at}
+            />
           )}
         </div>
       ),

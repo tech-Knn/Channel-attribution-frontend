@@ -27,6 +27,7 @@ export interface RevenueByArticle {
   // ── current state ──
   article_status: string
   reactivated_at: string | null       // populated when the article has been through a reactivation cycle
+  reactivation_count: number          // how many times this article has been reactivated (0 = never)
   current_channel_id: string | null   // channel currently serving this article (null = no active assignment)
   current_revenue: string             // revenue earned by the current assignment only
   current_impressions: string

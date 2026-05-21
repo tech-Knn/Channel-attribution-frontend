@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/header'
 import { StatCard } from '@/components/ui/stat-card'
 import { TableWrap, Table } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { ReactivationBadge } from '@/components/ui/reactivation-badge'
 import { SkeletonRows } from '@/components/ui/skeleton'
 import { RevenueChart } from '@/components/charts/revenue-chart'
 import { useStats, useAlerts } from '@/hooks/useStats'
@@ -80,7 +81,17 @@ export default function OverviewPage() {
   ]
 
   const revenueColumns = [
-    { key: 'article_id', label: 'Article', render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.article_id}</span> },
+    {
+      key: 'article_id', label: 'Article',
+      render: (r: RevenueByArticle) => (
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-xs text-zinc-400">{r.article_id}</span>
+          {Number(r.reactivation_count) > 0 && (
+            <ReactivationBadge count={Number(r.reactivation_count)} lastAt={r.reactivated_at} />
+          )}
+        </div>
+      ),
+    },
     {
       key: 'channel', label: 'Channel',
       render: (r: RevenueByArticle) =>
