@@ -48,20 +48,27 @@ function alertDesc(a: Alert): string {
 export default function OverviewPage() {
   const { data: stats } = useStats(REFRESH)
   const { data: summary } = useRevenueSummary(undefined, REFRESH)
-  // Show currently-live articles (assigned/active), ranked by lifetime
-  // revenue. We deliberately drop the today-only filter that was here
-  // before: today's revenue is sparse (AdSense reports lag a day or two),
-  // so a "Top Revenue Today" panel was mostly expired-zero rows.
-  // Lifetime context + active-only filter is the more useful snapshot.
+  // Two queries side by side so the panel can show TODAY and LIFETIME
+  // revenue for each currently-active article. Lifetime is the operational
+  // ranking signal (never $0 because of AdSense lag); Today is the pulse
+  // check that surfaces the worker's freshness. Both together let the user
+  // diagnose "stuck worker" vs "genuinely quiet day" themselves.
+  const todayStr = new Date().toISOString().slice(0, 10)
   const { data: topRevenue } = useRevenueByArticle({
-    limit: 50,
-    offset: 0,
-    sortBy: 'total_revenue',
-    sortDir: 'DESC',
+    limit: 50, offset: 0, sortBy: 'total_revenue', sortDir: 'DESC',
+  })
+  const { data: todayRevenue } = useRevenueByArticle({
+    limit: 100, offset: 0, sortBy: 'total_revenue', sortDir: 'DESC',
+    from: todayStr, to: todayStr,
   })
   const { data: alerts } = useAlerts(5, REFRESH)
   const activeArticles = (topRevenue?.data ?? []).filter(
     (r) => r.article_status === 'assigned' || r.article_status === 'active',
+  )
+  // Map article_id → today's revenue for fast lookup in the render. An
+  // article missing from todayRevenue's data simply has $0 today.
+  const todayRevenueMap = new Map<string, string>(
+    (todayRevenue?.data ?? []).map((r) => [r.article_id, r.total_revenue]),
   )
 
   const total = (stats?.active_channels ?? 0) + (stats?.idle_channels ?? 0) + (stats?.disapproved_channels ?? 0)
@@ -82,8 +89,16 @@ export default function OverviewPage() {
           : <span className="text-zinc-600">—</span>,
     },
     { key: 'status', label: 'Status', render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
-    { key: 'impressions', label: 'Impressions', render: (r: RevenueByArticle) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
-    { key: 'revenue', label: 'Revenue', render: (r: RevenueByArticle) => <span className="font-semibold tabular-nums text-emerald-400">{currency(r.total_revenue)}</span> },
+    {
+      key: 'today', label: 'Today',
+      render: (r: RevenueByArticle) => {
+        const today = Number(todayRevenueMap.get(r.article_id) ?? 0)
+        return today > 0
+          ? <span className="font-semibold tabular-nums text-emerald-400" title="Revenue earned today (AdSense reports lag 24-48h, so this is often $0 even on healthy days)">{currency(today)}</span>
+          : <span className="tabular-nums text-zinc-600" title="No revenue reported for today yet. AdSense typically reports yesterday's earnings within 24-48 hours.">$0.00</span>
+      },
+    },
+    { key: 'lifetime', label: 'Lifetime', render: (r: RevenueByArticle) => <span className="font-semibold tabular-nums text-emerald-500/80" title="Total revenue across every assignment this article has ever had">{currency(r.total_revenue)}</span> },
   ]
 
   return (
