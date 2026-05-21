@@ -186,16 +186,13 @@ export default function RevenuePage() {
     { key: 'revenue',           label: 'Revenue',     sortable: true, render: (r: AssignmentRevenue) => <span className="tabular-nums font-semibold text-emerald-400">{currency(r.revenue)}</span> },
   ]
 
-  // "Lifetime" qualifier on impressions/clicks/revenue makes it unambiguous
-  // that these are summed across every assignment the article has ever had.
-  // Per-assignment breakdowns live on the Timeline tab.
-  // Two cohorts of columns:
-  //   CURRENT   — live state of this entity right now (current article/channel + its revenue)
-  //   LIFETIME  — accumulated history across every assignment the entity has ever had
-  // The cohorts are positioned in column order so a reader scans current state first,
-  // then lifetime totals. Lifetime values get a muted color + tooltip pointing to Timeline
-  // for the per-assignment breakdown.
-  const currentHint  = 'Revenue earned by the assignment currently live on this entity.'
+  // Rollup columns kept lean: status (live state) + lifetime aggregates.
+  // The Current Channel / Current Revenue columns were removed because for
+  // single-channel articles they just duplicate Lifetime values. When an
+  // article has rotated channels and you want per-assignment context, click
+  // its Lifetime Revenue cell to drill into Timeline. The MV still carries
+  // the columns (current_channel_id, current_revenue, etc.) so they can be
+  // re-exposed without a schema change when rotation becomes common.
   const lifetimeHint = 'Summed across every channel this article has ever run on. Click the article id to see the per-assignment breakdown in Timeline.'
   const artCols = [
     {
@@ -217,16 +214,7 @@ export default function RevenuePage() {
       ),
     },
     { key: 'url',                 label: 'URL',                  render: (r: RevenueByArticle) => r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="max-w-[220px] truncate block text-blue-400 hover:underline text-xs">{r.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 45)}</a> : <span className="text-zinc-600">—</span> },
-    // ── current cohort ──
-    { key: 'article_status',      label: 'Current Status',       render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
-    {
-      key: 'current_channel_id', label: 'Current Channel',
-      render: (r: RevenueByArticle) =>
-        r.current_channel_id
-          ? <button onClick={() => drillToChannel(r.current_channel_id!)} className="font-mono text-xs text-zinc-300 hover:text-emerald-400 hover:underline cursor-pointer">{r.current_channel_id}</button>
-          : <span className="text-zinc-600">—</span>,
-    },
-    { key: 'current_revenue',   label: 'Current Revenue',      render: (r: RevenueByArticle) => Number(r.current_revenue) > 0 ? <span className="tabular-nums font-semibold text-emerald-400" title={currentHint}>{currency(r.current_revenue)}</span> : <span className="tabular-nums text-zinc-600" title={currentHint}>$0.00</span> },
+    { key: 'article_status',      label: 'Status',               render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
     // ── lifetime cohort ──
     { key: 'total_impressions', label: 'Lifetime Impressions', sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums text-zinc-500" title={lifetimeHint}>{number(r.total_impressions)}</span> },
     { key: 'total_clicks',      label: 'Lifetime Clicks',      sortable: true, headerTitle: lifetimeHint, render: (r: RevenueByArticle) => <span className="tabular-nums text-zinc-500" title={lifetimeHint}>{number(r.total_clicks)}</span> },
@@ -258,17 +246,7 @@ export default function RevenuePage() {
         <button onClick={() => drillToChannel(r.channel_id)} className="font-mono text-xs text-zinc-300 hover:text-emerald-400 hover:underline cursor-pointer" title="Open in Timeline — see which articles earned this channel's revenue">{r.channel_id}</button>
       ),
     },
-    // ── current cohort ──
-    { key: 'channel_status',    label: 'Current Status',       render: (r: RevenueByChannel) => <Badge status={r.channel_status} /> },
-    {
-      key: 'current_article_id', label: 'Current Article',
-      render: (r: RevenueByChannel) =>
-        r.current_article_id
-          ? <button onClick={() => drillToArticle(r.current_article_id!)} className="font-mono text-xs text-zinc-300 hover:text-emerald-400 hover:underline cursor-pointer text-left">{r.current_article_id}</button>
-          : <span className="text-zinc-600">—</span>,
-    },
-    { key: 'current_revenue',   label: 'Current Revenue',      render: (r: RevenueByChannel) => Number(r.current_revenue) > 0 ? <span className="tabular-nums font-semibold text-emerald-400" title={currentHint}>{currency(r.current_revenue)}</span> : <span className="tabular-nums text-zinc-600" title={currentHint}>$0.00</span> },
-    // ── lifetime cohort ──
+    { key: 'channel_status',    label: 'Status',               render: (r: RevenueByChannel) => <Badge status={r.channel_status} /> },
     { key: 'articles_served',   label: 'Articles Served',      sortable: true, render: (r: RevenueByChannel) => <span className="tabular-nums text-zinc-500">{number(r.articles_served)}</span> },
     { key: 'total_impressions', label: 'Lifetime Impressions', sortable: true, headerTitle: channelLifetimeHint, render: (r: RevenueByChannel) => <span className="tabular-nums text-zinc-500" title={channelLifetimeHint}>{number(r.total_impressions)}</span> },
     { key: 'total_clicks',      label: 'Lifetime Clicks',      sortable: true, headerTitle: channelLifetimeHint, render: (r: RevenueByChannel) => <span className="tabular-nums text-zinc-500" title={channelLifetimeHint}>{number(r.total_clicks)}</span> },
