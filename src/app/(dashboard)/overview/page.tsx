@@ -48,16 +48,21 @@ function alertDesc(a: Alert): string {
 export default function OverviewPage() {
   const { data: stats } = useStats(REFRESH)
   const { data: summary } = useRevenueSummary(undefined, REFRESH)
-  const todayStr = new Date().toISOString().slice(0, 10)
+  // Show currently-live articles (assigned/active), ranked by lifetime
+  // revenue. We deliberately drop the today-only filter that was here
+  // before: today's revenue is sparse (AdSense reports lag a day or two),
+  // so a "Top Revenue Today" panel was mostly expired-zero rows.
+  // Lifetime context + active-only filter is the more useful snapshot.
   const { data: topRevenue } = useRevenueByArticle({
-    limit: 8,
+    limit: 50,
     offset: 0,
     sortBy: 'total_revenue',
     sortDir: 'DESC',
-    from: todayStr,
-    to: todayStr,
   })
   const { data: alerts } = useAlerts(5, REFRESH)
+  const activeArticles = (topRevenue?.data ?? []).filter(
+    (r) => r.article_status === 'assigned' || r.article_status === 'active',
+  )
 
   const total = (stats?.active_channels ?? 0) + (stats?.idle_channels ?? 0) + (stats?.disapproved_channels ?? 0)
 
@@ -69,6 +74,13 @@ export default function OverviewPage() {
 
   const revenueColumns = [
     { key: 'article_id', label: 'Article', render: (r: RevenueByArticle) => <span className="font-mono text-xs text-zinc-400">{r.article_id}</span> },
+    {
+      key: 'channel', label: 'Channel',
+      render: (r: RevenueByArticle) =>
+        r.current_channel_id
+          ? <span className="font-mono text-xs text-zinc-300">{r.current_channel_id}</span>
+          : <span className="text-zinc-600">—</span>,
+    },
     { key: 'status', label: 'Status', render: (r: RevenueByArticle) => <Badge status={r.article_status} /> },
     { key: 'impressions', label: 'Impressions', render: (r: RevenueByArticle) => <span className="tabular-nums">{number(r.total_impressions)}</span> },
     { key: 'revenue', label: 'Revenue', render: (r: RevenueByArticle) => <span className="font-semibold tabular-nums text-emerald-400">{currency(r.total_revenue)}</span> },
@@ -113,12 +125,12 @@ export default function OverviewPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Top revenue */}
-          <TableWrap title="Top Revenue Today">
+          {/* Active articles — currently-live articles ranked by lifetime revenue */}
+          <TableWrap title="Active Articles">
             {!topRevenue ? (
-              <table className="w-full"><tbody><SkeletonRows cols={4} rows={5} /></tbody></table>
+              <table className="w-full"><tbody><SkeletonRows cols={5} rows={5} /></tbody></table>
             ) : (
-              <Table columns={revenueColumns} data={topRevenue.data} emptyMessage="No revenue data yet" />
+              <Table columns={revenueColumns} data={activeArticles} emptyMessage="No active articles right now" />
             )}
           </TableWrap>
 
